@@ -30,19 +30,6 @@ async function getPool() {
   return pool
 }
 
-// Ensure table exists
-async function ensureTable() {
-  const pool = await getPool()
-  await pool.request().query(`
-    IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Names' AND xtype='U')
-    CREATE TABLE Names (
-      Id INT IDENTITY(1,1) PRIMARY KEY,
-      Name NVARCHAR(255) NOT NULL,
-      CreatedAt DATETIME2 DEFAULT SYSUTCDATETIME()
-    )
-  `)
-}
-
 app.post('/api/names', async (req, res) => {
   try {
     const { name } = req.body
@@ -50,7 +37,8 @@ app.post('/api/names', async (req, res) => {
       return res.status(400).json({ error: 'Name is required' })
     }
 
-    await ensureTable()
+    // Table creation is handled in the .NET backend.
+    // This endpoint assumes that the "Names" table already exists.
     const pool = await getPool()
     const result = await pool
       .request()
@@ -66,7 +54,8 @@ app.post('/api/names', async (req, res) => {
 
 app.get('/api/names', async (req, res) => {
   try {
-    await ensureTable()
+    // Table creation is handled in the .NET backend.
+    // This endpoint assumes that the "Names" table already exists.
     const pool = await getPool()
     const result = await pool.request().query('SELECT Id, Name, CreatedAt FROM Names ORDER BY CreatedAt DESC')
     res.json(result.recordset)
